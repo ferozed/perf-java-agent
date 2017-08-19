@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.zillow</groupId>
+    <artifactId>zillow-parent</artifactId>
+    <version>4.0-SNAPSHOT</version>
+  </parent>
+  <groupId>com.zillow</groupId>
+  <artifactId>zquick-all</artifactId>
+  <version>${gte.com.zillow.zquick-all.version}</version>
+  <packaging>pom</packaging>
+  <name>all zquick modules</name>
+  <modules>
+    <module>zquick-agent</module>
+    <module>zquick-example</module>
+  </modules>
+  <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.zillow.maven.extensions</groupId>
+                <artifactId>release-platform-manager-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>update-deployment-version</id>
+                        <goals>
+                            <goal>set-deploy-version</goal>
+                        </goals>
+                        <configuration>
+                            <artifactKey>zillow_zquick</artifactKey>
+                            <config>
+                                <ManifestConfigParams>
+                                    <branch>feature/comp_di_b</branch>
+                                    <env>zpid_mixin</env>
+                                </ManifestConfigParams>
+                            </config>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>    
+  
+</project>

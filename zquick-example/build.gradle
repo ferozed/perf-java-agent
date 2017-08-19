@@ -1,0 +1,10 @@
+apply plugin: 'com.zillow.java'
+
+
+
+dependencies{
+
+    compile 'com.zillow:zillow-environment:auto'
+
+    testCompile 'junit:junit:auto'
+}
