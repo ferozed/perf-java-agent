@@ -1,0 +1,207 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>com.zillow</groupId>
+		<artifactId>zillow-parent</artifactId>
+		<version>4.0-SNAPSHOT</version>
+	</parent>
+
+	<groupId>com.zillow</groupId>
+	<artifactId>zquick-agent</artifactId>
+	<!-- version>0.0-SNAPSHOT</version -->
+	<version>${gte.com.zillow.zquick-agent.version}</version>
+	<packaging>jar</packaging>
+
+	<name>workflow</name>
+	<url>http://maven.apache.org</url>
+
+	<properties>
+        <maven.compiler.showDeprecation>true</maven.compiler.showDeprecation>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <scala.version>2.9.2</scala.version> <!-- reserved for future use -->
+        <truezip.version>7.7.1</truezip.version>
+		<lucene.version>5.4.0</lucene.version>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<version>1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.11</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<sourceDirectory>src/main/java</sourceDirectory>
+		<testSourceDirectory>src/test/java</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>config</directory>
+            </resource>
+        </resources>
+		<testResources>
+			<testResource>
+				<directory>test_config</directory>
+			</testResource>
+		</testResources>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>-da:com.zillow... -Dcom.zillow.junit_running=true -Xmx500m -Dlog4j.configuration=file:./test_config/etl-test-log4j.xml</argLine>
+					<!-- Disable assertions -->
+					<excludes>
+						<exclude>**/PogoTest.java</exclude>
+						<exclude>**/TestHookTest.java</exclude>
+					</excludes>
+					<systemProperties>
+						<systemProperty>
+							<name>log4j.configuration</name>
+							<value>file:./test_config/etl-test-log4j.xml</value>
+						</systemProperty>
+						<systemProperty>
+							<name>com.zillow.web.debug-enabled</name>
+							<value>true</value>
+						</systemProperty>
+					</systemProperties>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>com.maventest.App</mainClass>
+						</manifest>
+						<manifestEntries>
+							<Premain-Class>com.zillow.zquick.agent.ZquickAgent</Premain-Class>
+							<Can-Redefine-Classes>true</Can-Redefine-Classes>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<artifactSet>
+								<excludes>
+									<exclude>log4j:log4j:jar:</exclude>
+								</excludes>
+							</artifactSet>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.zillow.maven.extensions</groupId>
+				<artifactId>release-platform-manager-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>update-deployment-version</id>
+						<goals>
+							<goal>set-deploy-version</goal>
+						</goals>
+						<configuration>
+							<artifactKey>jar://com.zillow/zquick-agent</artifactKey>
+							<config>
+								<ManifestConfigParams>
+									<branch>feature/comp_di_a</branch>
+									<env>comp_di_a</env>
+								</ManifestConfigParams>
+								<ManifestConfigParams>
+									<branch>feature/comp_di_b</branch>
+									<env>zpid_mixin</env>
+								</ManifestConfigParams>
+								<ManifestConfigParams>
+									<branch>master</branch>
+									<env>zpid_hotfix</env>
+								</ManifestConfigParams>
+							</config>
+						</configuration>
+					</execution>
+					<execution>
+						<id>module-tracker</id>
+						<goals>
+							<goal>module-tracker</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+    <profiles>
+        <profile>
+            <id>testResources</id>
+            <activation>
+                <property>
+                    <name>testIntegration</name>
+                </property>
+            </activation>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>test_config</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <!--testResource>
+                        <directory>${env.ZILLOW_CONFIG_ROOT}</directory>
+                    </testResource-->
+                    <testResource>
+                        <directory>${env.ZILLOW_CONFIG_ROOT}/DataAccessAPI</directory>
+                        <targetPath>${project.build.testOutputDirectory}/DataAccessAPI </targetPath>
+                        <!--excludes>
+                        <exclude>db-broker-import-queue-context.xml</exclude>
+                        <exclude>db-broker-import-queue-datasources-config.xml</exclude>
+                        </excludes -->
+                    </testResource>
+                    <testResource>
+                        <directory>${env.ZILLOW_CONFIG_ROOT}/CoreServices</directory>
+                        <targetPath>${project.build.testOutputDirectory}/CoreServices </targetPath>
+                    </testResource>
+                    <testResource>
+                        <directory>${env.ZILLOW_CONFIG_ROOT}/PropertyServices</directory>
+                        <targetPath>${project.build.testOutputDirectory}/PropertyServices </targetPath>
+                    </testResource>
+                    <testResource>
+                        <directory>${env.ZILLOW_CONFIG_ROOT}/BrokerFeedImport</directory>
+                        <targetPath>${project.build.testOutputDirectory}/BrokerFeedImport </targetPath>
+                    </testResource>
+                    <testResource>
+                        <directory>${env.ZILLOW_CONFIG_ROOT}/FileDownloadServices</directory>
+                        <targetPath>${project.build.testOutputDirectory}/FileDownloadServices </targetPath>
+                    </testResource>
+                    <testResource>
+                        <directory>${env.ZILLOW_CONFIG_ROOT}/SearchServices</directory>
+                        <targetPath>${project.build.testOutputDirectory}/SearchServices </targetPath>
+                    </testResource>
+                </testResources>
+            </build>
+        </profile>
+    </profiles>
+</project>
