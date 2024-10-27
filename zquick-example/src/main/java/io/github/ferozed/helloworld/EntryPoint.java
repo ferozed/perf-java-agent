@@ -1,4 +1,4 @@
-package com.zillow.helloworld;
+package io.github.ferozed.helloworld;
 
 /**
  * Created by ferozed on 8/19/17.
@@ -6,7 +6,7 @@ package com.zillow.helloworld;
 public class EntryPoint {
 
     public static void main(String [] args) {
-        new JarFileTest().run("zquick-example/target/zquick-example-0.0.1-master.605648b.jar");
+        new JarFileTest().run("zquick-example/target/zquick-example-0.0.3-master.c334a8e.jar");
         HelloWorld h = new HelloWorld();
         while(true) {
             String ret = h.hello();

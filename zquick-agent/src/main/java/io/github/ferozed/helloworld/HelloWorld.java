@@ -1,4 +1,4 @@
-package com.zillow.helloworld;
+package io.github.ferozed.helloworld;
 
 public class HelloWorld {
 

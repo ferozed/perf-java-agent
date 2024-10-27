@@ -1,4 +1,4 @@
-package com.zillow.zquick.agent;
+package io.github.ferozed.zquick.agent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -7,12 +7,16 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by ferozed on 8/18/17.
  */
 public class ClassTransformer implements ClassFileTransformer {
     private static final Log LOG = LogFactory.getLog(ClassTransformer.class);
+
+    private Map<String, Class<?>> nameToClassMap = new HashMap<String, Class<?>>();
 
     /**
      * The implementation of this method may transform the supplied class file and
@@ -150,8 +154,18 @@ public class ClassTransformer implements ClassFileTransformer {
             LOG.debug(String.format("transform %s", className));
         }
 
-        System.out.println("transform : " + className);
+        nameToClassMap.put(className, classBeingRedefined);
 
         return null;
+    }
+
+    public Class getClassByName(String name)
+    {
+        if(LOG.isDebugEnabled())
+        {
+            LOG.debug(String.format("getClassByName %s", name));
+        }
+
+        return nameToClassMap.get(name);
     }
 }

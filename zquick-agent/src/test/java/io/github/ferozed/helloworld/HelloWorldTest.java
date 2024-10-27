@@ -1,4 +1,4 @@
-package com.zillow.helloworld;
+package io.github.ferozed.helloworld;
 
 import org.junit.Assert;
 import org.junit.Before;

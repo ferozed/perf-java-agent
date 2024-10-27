@@ -1,4 +1,7 @@
-package com.zillow.zquick.agent;
+package io.github.ferozed.zquick.agent;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,12 +22,19 @@ import java.util.zip.ZipEntry;
  */
 public class JarFileOps
 {
+    private static final Log LOG = LogFactory.getLog(JarFileOps.class);
+
     private String path;
+    private Instrumentation instrumentation;
+    private ClassTransformer classTransformer;
 
     private HashMap<String, JarEntry> jarDict = new HashMap<String, JarEntry>();
 
-    public JarFileOps(String path) {
+    public JarFileOps(String path, Instrumentation instrumentation, ClassTransformer classTransformer)
+    {
+        this.instrumentation = instrumentation;
         this.path = path;
+        this.classTransformer = classTransformer;
     }
 
     public void loadJar()
@@ -34,12 +44,15 @@ public class JarFileOps
         try {
             JarFile jf = new JarFile(new File(path));
 
+            instrumentation.appendToSystemClassLoaderSearch(jf);
+
             Enumeration<JarEntry> jen = jf.entries();
 
             while(jen.hasMoreElements())
             {
                 JarEntry je = jen.nextElement();
-                System.out.printf("%s %s\n", je.getName(), je.getSize());
+                if (LOG.isDebugEnabled())
+                    LOG.debug(String.format("%s %s\n", je.getName(), je.getSize()));
 
                 if (!je.getName().endsWith(".class"))
                 {
@@ -53,13 +66,12 @@ public class JarFileOps
         }
     }
 
-    public void reloadClasses(Instrumentation instrumentation)
+    public void reloadClasses()
     {
-        System.out.println("reloadClasses()");
+        LOG.info("reloadClasses() " + path);
 
-        try {
-            JarFile jf = new JarFile(new File(path));
-
+        try(JarFile jf = new JarFile(new File(path)))
+        {
             Enumeration<JarEntry> jen = jf.entries();
 
             while(jen.hasMoreElements())
@@ -71,7 +83,9 @@ public class JarFileOps
                     continue;
                 }
 
-                System.out.printf("test for reload: %s %s\n", je.getName(), je.getSize());
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug(String.format("test for reload: %s %s\n", je.getName(), je.getSize()));
+                }
 
                 JarEntry old = jarDict.get(je.getName());
 
@@ -90,7 +104,7 @@ public class JarFileOps
                     int i = className.lastIndexOf(".");
                     className = className.substring(0, i);
 
-                    System.out.printf("do reload: %s %s\n", je.getName(), className);
+                    LOG.info(String.format("do reload: %s %s\n", je.getName(), className));
 
                     ZipEntry ze = jf.getEntry(je.getName());
 
@@ -112,15 +126,23 @@ public class JarFileOps
                     if (classBytes == null)
                         throw new NullPointerException("classBytes");
 
-                    ClassDefinition cd = new ClassDefinition(Class.forName(className), classBytes);
-                    instrumentation.redefineClasses(cd);
+                    Class clazz = classTransformer.getClassByName(className);
+
+                    if (clazz == null)
+                        throw new NullPointerException("clazz");
+
+                    try {
+                        ClassDefinition cd = new ClassDefinition(clazz, classBytes);
+                        instrumentation.redefineClasses(cd);
+                    } catch (ClassNotFoundException e) {
+                        System.err.println("Class not found for reload! " + className + "\n");
+                        LOG.error("Exception loading: " + className, e);
+                    } catch (UnmodifiableClassException e) {
+                        LOG.error("Exception loading: " + className, e);
+                    }
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (UnmodifiableClassException e) {
             e.printStackTrace();
         }
 

@@ -1,4 +1,4 @@
-package com.zillow.helloworld;
+package io.github.ferozed.helloworld;
 
 import java.io.File;
 import java.io.IOException;

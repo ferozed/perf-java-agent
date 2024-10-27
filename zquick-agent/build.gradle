@@ -1,10 +1,10 @@
-apply plugin: 'com.zillow.java'
+apply plugin: 'io.github.ferozed.java'
 
 
 
 dependencies{
 
-    compile 'com.zillow:zillow-environment:auto'
+    compile 'io.github.ferozed:zillow-environment:auto'
 
     testCompile 'junit:junit:auto'
 }

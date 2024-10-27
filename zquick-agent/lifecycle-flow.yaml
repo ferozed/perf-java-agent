@@ -1,7 +1,0 @@
-source:
-  config:
-    type: gradle-build
-
-  release-platform-config:
-  - branch: default
-    platform: hotfix.latest
